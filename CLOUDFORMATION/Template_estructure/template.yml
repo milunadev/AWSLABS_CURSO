@@ -1,0 +1,65 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: >
+  Plantilla de CloudFormation para desplegar una función AWS Lambda y una API Gateway.
+  Demuestra el uso de Descripción, Metadata, Parámetros, Mappings, Condiciones, Transform, Resources y Outputs.
+
+#Proporciona informacion adicional de la plantilla
+Metadata:
+  TemplateVersion: "2022-01-01"
+  TemplateAuthor: "MLuna"
+
+#Permite al usuario definir un tipo de ambiente
+Parameters:
+  EnvironmentType:
+    Description: Tipo de entorno (por ejemplo, desarrollo, producción)
+    Type: String
+    AllowedValues:
+      - desarrollo
+      - produccion
+    Default: desarrollo
+  CodeURL:
+    Description: Define la URL del objeto zip que contiene el codigo de la funcion
+    Type: String
+
+#Asigan diferentes configuracionmes a los tipos de entorno
+Mappings:
+  EnvConfig:
+    desarrollo:
+      LambdaMemorySize: 128
+    produccion:
+      LambdaMemorySize: 256
+
+#Define el valor de IsProduccion en base a una condicion
+Conditions:
+  IsProduccion: !Equals [ !Ref EnvironmentType, produccion ]
+
+#Con transform podemos incluir el modelo SAM para simplificar la creacion de arqui serverless
+#La plantilla usa transform para interpretar la sintaaxis simplificada de AWS SAM.
+Transform:
+  - 'AWS::Serverless-2016-10-31'
+
+#https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-template-resource-type-ref.html
+Resources:
+  MyLambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !If [IsProduccion, "MyLambdaFunction-Produccion", "MyLambdaFunction-Desarrollo"]
+      Handler: app.lambda_handler
+      Runtime: python3.8
+      MemorySize: !FindInMap [ EnvConfig, !Ref EnvironmentType, LambdaMemorySize ]
+      CodeUri: s3://cf-templates-mluna/app.zip
+      Events:
+        MyAPIEvent:
+          Type: Api
+          Properties:
+            Path: /miendpoint
+            Method: get
+
+Outputs:
+  LambdaFunctionName:
+    Description: "Nombre de la función Lambda"
+    Value: !Ref MyLambdaFunction
+  EndpointURL:
+    Description: "URL de la API Gateway"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Stage/miendpoint"

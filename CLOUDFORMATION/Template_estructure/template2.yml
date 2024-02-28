@@ -1,0 +1,75 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: >
+  Plantilla de CloudFormation para desplegar una función AWS Lambda y una API Gateway.
+  Demuestra el uso de Descripción, Metadata, Parámetros, Mappings, Condiciones, Resources y Outputs.
+
+Metadata:
+  TemplateVersion: "2022-01-01"
+  TemplateAuthor: "MLuna"
+
+Resources:
+  MyLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: index.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Runtime: nodejs14.x
+      Code:
+        S3Bucket: "mi-bucket-lambda"
+        S3Key: "mi-codigo-lambda.zip"
+
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: [lambda.amazonaws.com]
+            Action: ["sts:AssumeRole"]
+      Policies:
+        - PolicyName: "lambda-execution-policy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "logs:*"
+                Resource: "arn:aws:logs:*:*:*"
+
+  MyApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: "MyApi"
+      Description: "API para interactuar con la función Lambda"
+      FailOnWarnings: 'true'
+
+  MyApiResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt "MyApi.RootResourceId"
+      PathPart: 'miendpoint'
+      RestApiId: !Ref MyApi
+
+  MyApiMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref MyApi
+      ResourceId: !Ref MyApiResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${MyLambdaFunction.Arn}/invocations"
+
+Outputs:
+  LambdaFunctionArn:
+    Description: "ARN de la función Lambda"
+    Value: !GetAtt MyLambdaFunction.Arn
+
+  ApiEndpoint:
+    Description: "URL de la API Gateway"
+    Value: !Sub "https://${MyApi}.execute-api.${AWS::Region}.amazonaws.com/Stage"

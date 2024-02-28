@@ -1,0 +1,40 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Plantilla simple de Cloudformation para levantar un EC2 con SSHKeys y un SG que permita el trafico SSH
+
+#ESTE PARAMETRO PERMITE AL USUARIO INGRESAR EL NOMBRE DE LA LLAVE QUE USARA
+Parameters:
+  SSHKeyName:
+    Description: Nombre de la clave SSH para acceder a la instancia 
+    Type: AWS::EC2::KeyPair::KeyName
+  
+Resources:
+#Declaramos los recursos, comenzamos con el SG
+  SSHSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: SSH_SG
+      GroupDescription: Grupo que permite el acceso SSH 
+      #Regla de entrada SSH
+      SecurityGroupIngress:
+        CidrIp: 0.0.0.0/0
+        Description: "String"
+        FromPort: 22
+        ToPort: 22
+        IpProtocol: "tcp" # Required
+#Declaramos el recurso EC2
+  myEC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      KeyName: !Ref SSHKeyName
+      InstanceType: t2.micro
+      SecurityGroups:
+        - !Ref SSHSecurityGroup
+      UserData: !Base64 |
+        #!/bin/bash -ex
+        touch hola.txt
+      ImageId: ami-0277155c3f0ab2930
+  
+
+Outputs:
+  PublicIp:
+    Value: !GetAtt myEC2Instance.PublicIp
