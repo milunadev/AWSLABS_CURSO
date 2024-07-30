@@ -1,5 +1,23 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Deploy a VPC
+Description: Deploy a VPC and an EC2 Instance
+
+Parameters:
+  InstanceName:
+    Description: The name of the EC2 instance
+    Type: String
+    Default: MyEC2Instance
+  InstanceType:
+    Description: The EC2 instance type
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - t2.micro
+      - t3.micro
+    ConstraintDescription: must be a valid EC2 instance type.
+  AMIID:
+    Description: The ID of the AMI to use for the instance
+    Type: AWS::EC2::Image::Id
+    Default: ami-02031d73889932104
 
 Resources:
   VPC:
@@ -83,6 +101,32 @@ Resources:
       SubnetId: !Ref PrivateSubnet1
       RouteTableId: !Ref PrivateRouteTable
 
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Properties: 
+      InstanceType: !Ref InstanceType
+      SubnetId: !Ref PublicSubnet1
+      ImageId: !Ref AMIID
+      Tags:
+        - Key: Name
+          Value: !Ref InstanceName
+      SecurityGroupIds:
+        - !Ref InstanceSecurityGroup
+
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable SSH access
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: InstanceSecurityGroup
+
 Outputs:
   VPC:
     Description: VPC
@@ -92,3 +136,9 @@ Outputs:
     Value: !GetAtt 
       - PublicSubnet1
       - AvailabilityZone
+  InstanceID:
+    Description: Instance ID
+    Value: !Ref EC2Instance
+  InstancePrivateIP:
+    Description: Private IP Address of the instance
+    Value: !GetAtt EC2Instance.PrivateIp

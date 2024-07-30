@@ -1,22 +1,38 @@
- CLOUDFORMATION 
+# CLOUDFORMATION LAB
 
-## RESOURCES
+1. Vamos a la consola de Cloudformation y creamos un nuevo stack (conjunto logico de recursos)
+![Alt text](./static/image.png)
 
-1. Extension de VS Code: **CloudFormation** 
+2. Hay 3 maneras de desplegar un stack, lo haremos con la opcion de cargar la plantilla de forma manual. Subimos el archivo "cloud-formation-vpc-1.yaml" de la carpeta VPC_changeset del repositorio actual.
+![Alt text](./static/image-2.png)
 
-    Es una extension de VSCode que facilita el desarrollo de plantillas de CloudFormation
-    Name: CloudFormation
-    VS Marketplace Link: https://marketplace.visualstudio.com/items?itemName=aws-scripting-guy.cform
+3. Definimos los parametros para personalizar los recursos que levantara la plantilla.
+![Alt text](./static/image-3.png)
 
-    ![Alt text](image-1.png)
+4. En los siguientes pasos solo especificaremos el rol que AWS Cloudformation usara para levantar diferentes recursos.
+![Alt text](./static/image-4.png)
 
-2. Catalogo de AMIs:
-    - Amazon Linux 2023 AMI: ami-0277155c3f0ab2930
-    - Amazon Linux 2 AMI: ami-0cf10cdf9fcd62d37
-    - Ubuntu Server 20.04 LTS: ami-06aa3f7caf3a30282
+    #### AMI IDs for Different Regions: Amazon Linux 2023
 
-3. Subir archivos a S3:
+    | Region         | AMI ID               |
+    |----------------|-----------------------|
+    | us-east-1      | ami-0427090fd1714168b |
+    | us-east-2      | ami-00db8dadb36c9815e |
+    | us-west-1      | ami-03ed1381c73a5660e  |
+    | eu-west-2      | ami-074be47313f84fa38  |
+    | sa-east-1      | ami-02031d73889932104  |
 
-   ```bash
-    aws s3 cp file.yml s3://bucket-name/
-   ```
+
+5. Enviamos las configuraciones y deberia comenzar a crearse el stack.
+![Alt text](./static/image-5.png)
+
+6. CREAR UN CHANGESET: Creamos una version del stack que podria modificar/eliminar/crear recursos dependiendo de los cambios que hayamos realizado en la plantilla.
+![Alt text](./static/image-6.png)
+
+7. Seleccionamos la opcion de reemplazar la plantilla y subimos la version 2. 
+![Alt text](./static/image-7.png)
+![Alt text](./static/image-8.png)
+![Alt text](./static/image-9.png)
+
+8. Con estos cambios enviados ya podemos visualizar los cambios que se haran en el stack: 
+![Alt text](./static/image-10.png)
